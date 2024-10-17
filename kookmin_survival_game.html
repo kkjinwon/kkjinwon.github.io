@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국민대 서바이벌</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+        #gameArea {
+            width: 100vw;
+            height: 100vh;
+            background-color: #282c34;
+            position: relative;
+            overflow: hidden;
+        }
+        #startScreen {
+            width: 100vw;
+            height: 100vh;
+            background-color: #f8f9fa;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #startScreen h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        #startButton {
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background-color: #0056b3;
+        }
+        #instructions {
+            margin-top: 30px;
+            font-size: 1.2rem;
+        }
+        #player {
+            width: 50px;
+            height: 100px;
+            background-color: #ffcc00;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px;
+            background-image: url('https://via.placeholder.com/50x100?text=학생'); /* 국민대 학생 이미지 */
+            background-size: cover;
+            border: 2px solid #000;
+        }
+        #boss {
+            width: 50px;
+            height: 75px;
+            background-color: #ff0000;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px;
+            background-image: url('https://via.placeholder.com/50x75?text=교수님'); /* 교수님 이미지 */
+            background-size: cover;
+            border: 2px solid #000;
+        }
+        #gameStats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 첫 화면 -->
+    <div id="startScreen">
+        <h1>국민대 서바이벌</h1>
+        <button id="startButton">게임 시작</button>
+        <div id="instructions">이동: W(위), A(왼쪽), S(아래), D(오른쪽)</div>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="gameArea" style="display: none;">
+        <div id="player"></div>
+        <div id="boss"></div>
+        <div id="gameStats">체력: 10 | 남은 시간: 120</div>
+    </div>
+
+    <script>
+        const startScreen = document.getElementById('startScreen');
+        const gameArea = document.getElementById('gameArea');
+        const startButton = document.getElementById('startButton');
+        const player = document.getElementById('player');
+        const boss = document.getElementById('boss');
+        const gameStats = document.getElementById('gameStats');
+
+        let playerX = window.innerWidth / 2 - 25;
+        let playerY = window.innerHeight - 110;
+        let speed = 5;
+        let health = 10;
+        let gameDuration = 120;
+        let interval;
+
+        // 첫 화면에서 게임 시작 버튼 클릭 시
+        startButton.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            gameArea.style.display = 'block';
+            startGame();
+        });
+
+        // 게임 시작 함수
+        function startGame() {
+            player.style.left = `${playerX}px`;
+            player.style.top = `${playerY}px`;
+            interval = setInterval(updateGame, 1000);
+        }
+
+        // WASD 이동
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'a' && playerX > 0) playerX -= speed;
+            if (e.key === 'd' && playerX < window.innerWidth - 50) playerX += speed;
+            if (e.key === 'w' && playerY > 0) playerY -= speed;
+            if (e.key === 's' && playerY < window.innerHeight - 100) playerY += speed;
+            player.style.left = `${playerX}px`;
+            player.style.top = `${playerY}px`;
+        });
+
+        // 게임 업데이트 함수
+        function updateGame() {
+            gameDuration--;
+            gameStats.textContent = `체력: ${health} | 남은 시간: ${gameDuration}`;
+
+            // 시간 끝나면 게임 종료
+            if (gameDuration <= 0 || health <= 0) {
+                endGame();
+            }
+        }
+
+        // 게임 종료 함수
+        function endGame() {
+            clearInterval(interval);
+            alert(health <= 0 ? "게임 오버" : "이 게임을 끝낸 당신은 무엇이든 할 수 있습니다.");
+            location.reload(); // 처음 화면으로 돌아가기
+        }
+    </script>
+</body>
+</html>
