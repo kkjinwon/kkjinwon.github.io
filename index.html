@@ -60,14 +60,11 @@
             background-size: cover;
             border: 2px solid #000;
         }
-        #boss {
+        .enemy {
             width: 50px;
             height: 75px;
             background-color: #ff0000;
             position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
             border-radius: 10px;
             background-image: url('https://via.placeholder.com/50x75?text=교수님'); /* 교수님 이미지 */
             background-size: cover;
@@ -93,7 +90,6 @@
     <!-- 게임 화면 -->
     <div id="gameArea" style="display: none;">
         <div id="player"></div>
-        <div id="boss"></div>
         <div id="gameStats">체력: 10 | 남은 시간: 120</div>
     </div>
 
@@ -102,15 +98,17 @@
         const gameArea = document.getElementById('gameArea');
         const startButton = document.getElementById('startButton');
         const player = document.getElementById('player');
-        const boss = document.getElementById('boss');
         const gameStats = document.getElementById('gameStats');
 
         let playerX = window.innerWidth / 2 - 25;
         let playerY = window.innerHeight - 110;
-        let speed = 5;
+        let speed = 15; // 플레이어 속도 3배 증가
+        let enemySpeed = speed * 0.7; // 적 속도를 플레이어 속도의 0.7배로 설정
         let health = 10;
         let gameDuration = 120;
         let interval;
+        let enemies = [];
+        let keysPressed = {}; // 키 입력을 저장하기 위한 객체
 
         // 첫 화면에서 게임 시작 버튼 클릭 시
         startButton.addEventListener('click', () => {
@@ -119,32 +117,91 @@
             startGame();
         });
 
+        // 적 생성 함수
+        function createEnemies() {
+            for (let i = 0; i < 10; i++) {  // 적 10명 생성
+                let enemy = document.createElement('div');
+                enemy.classList.add('enemy');
+                enemy.style.left = `${Math.random() * (window.innerWidth - 50)}px`;
+                enemy.style.top = `${Math.random() * (window.innerHeight / 2)}px`; // 상단 절반에 생성
+                gameArea.appendChild(enemy);
+                enemies.push(enemy);
+            }
+        }
+
         // 게임 시작 함수
         function startGame() {
             player.style.left = `${playerX}px`;
             player.style.top = `${playerY}px`;
-            interval = setInterval(updateGame, 1000);
+            createEnemies();
+            interval = setInterval(updateGame, 1000 / 60); // 60FPS로 업데이트
         }
 
-        // WASD 이동
+        // 키 입력 감지 및 이동
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'a' && playerX > 0) playerX -= speed;
-            if (e.key === 'd' && playerX < window.innerWidth - 50) playerX += speed;
-            if (e.key === 'w' && playerY > 0) playerY -= speed;
-            if (e.key === 's' && playerY < window.innerHeight - 100) playerY += speed;
+            keysPressed[e.key] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            keysPressed[e.key] = false;
+        });
+
+        function movePlayer() {
+            if (keysPressed['a'] && playerX > 0) playerX -= speed;
+            if (keysPressed['d'] && playerX < window.innerWidth - 50) playerX += speed;
+            if (keysPressed['w'] && playerY > 0) playerY -= speed;
+            if (keysPressed['s'] && playerY < window.innerHeight - 100) playerY += speed;
+
             player.style.left = `${playerX}px`;
             player.style.top = `${playerY}px`;
-        });
+        }
 
         // 게임 업데이트 함수
         function updateGame() {
             gameDuration--;
             gameStats.textContent = `체력: ${health} | 남은 시간: ${gameDuration}`;
+            movePlayer();
+            moveEnemies();
+            checkCollision();
 
             // 시간 끝나면 게임 종료
             if (gameDuration <= 0 || health <= 0) {
                 endGame();
             }
+        }
+
+        // 적이 플레이어를 따라가도록 함
+        function moveEnemies() {
+            enemies.forEach((enemy) => {
+                let enemyX = parseInt(enemy.style.left);
+                let enemyY = parseInt(enemy.style.top);
+
+                if (enemyX < playerX) enemyX += enemySpeed;
+                else if (enemyX > playerX) enemyX -= enemySpeed;
+
+                if (enemyY < playerY) enemyY += enemySpeed;
+                else if (enemyY > playerY) enemyY -= enemySpeed;
+
+                enemy.style.left = `${enemyX}px`;
+                enemy.style.top = `${enemyY}px`;
+            });
+        }
+
+        // 플레이어와 적의 충돌 검사
+        function checkCollision() {
+            enemies.forEach((enemy) => {
+                let enemyRect = enemy.getBoundingClientRect();
+                let playerRect = player.getBoundingClientRect();
+
+                if (
+                    enemyRect.left < playerRect.right &&
+                    enemyRect.right > playerRect.left &&
+                    enemyRect.top < playerRect.bottom &&
+                    enemyRect.bottom > playerRect.top
+                ) {
+                    health--;  // 충돌 시 체력 감소
+                    gameStats.textContent = `체력: ${health} | 남은 시간: ${gameDuration}`;
+                }
+            });
         }
 
         // 게임 종료 함수
